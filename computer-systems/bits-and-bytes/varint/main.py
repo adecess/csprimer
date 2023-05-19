@@ -22,7 +22,7 @@ def seven_to_eight(seven_bit_list: list) -> list:
     return [add_one_bit(seven_bit_list[i], i) for i in range(0, len(seven_bit_list))]
 
 
-def binary_list_to_byte_list(byte_list: list) -> str:
+def binary_list_to_byte_list(byte_list: list) -> list:
     # put in little endian order and turn into a list of byte objects
     byte_list.reverse()
     return [struct.pack('B', int(bit_string, 2)) for bit_string in byte_list]
@@ -46,7 +46,7 @@ def decode_int(bits_list: list) -> int:
     return int(bit_string, 2)
 
 
-def encode(num: int) -> list:
+def encode(num: int) -> bytes:
     bin_num = format(num, 'b')
     zero_extended_bin_num = zero_extend_to_seven(bin_num)
     seven_bit_groups = split_into_groups(zero_extended_bin_num)
