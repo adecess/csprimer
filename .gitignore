@@ -1,0 +1,14 @@
+.DS_Store
+
+# dotenv
+.env
+
+# virtualenv
+venv/
+ENV/
+
+# idea folder
+*.idea
+
+# uint files
+*.uint64
