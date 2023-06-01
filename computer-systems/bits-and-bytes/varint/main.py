@@ -24,8 +24,7 @@ def seven_to_eight(seven_bit_list: list) -> list:
 
 def binary_list_to_byte_list(byte_list: list) -> list:
     # put in little endian order and turn into a list of byte objects
-    byte_list.reverse()
-    return [struct.pack('B', int(bit_string, 2)) for bit_string in byte_list]
+    return [struct.pack('B', int(bit_string, 2)) for bit_string in reversed(byte_list)]
 
 
 def hex_to_bits(byte_string: bytes) -> list:
@@ -36,8 +35,7 @@ def hex_to_bits(byte_string: bytes) -> list:
 def byte_list_to_seven_bit_list(bytes_list: list) -> list:
     # drop continuation bits and put in little-endian order
     seven_bit_list = [byte[1:] for byte in bytes_list]
-    seven_bit_list.reverse()
-    return seven_bit_list
+    return reversed(seven_bit_list)
 
 
 def decode_int(bits_list: list) -> int:
