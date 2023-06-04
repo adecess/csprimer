@@ -32,7 +32,7 @@ def hex_to_bits(byte_string: bytes) -> list:
     return [format(byte_string[i], '08b') for i in range(0, len(byte_string))]
 
 
-def byte_list_to_seven_bit_list(bytes_list: list) -> list:
+def byte_list_to_seven_bit_list(bytes_list: list) -> reversed:
     # drop continuation bits and put in little-endian order
     seven_bit_list = [byte[1:] for byte in bytes_list]
     return reversed(seven_bit_list)
