@@ -6,7 +6,7 @@ def hex_to_int(hex_str):
     hex_numbers = "0123456789abcdef"
     integer = 0
     for i in hex_str.lower():
-        integer = integer * 16 + hex_numbers.index(i)
+        integer = (integer << 4) | hex_numbers.index(i)
     return integer
 
 
