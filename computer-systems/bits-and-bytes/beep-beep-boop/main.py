@@ -1,6 +1,10 @@
 import sys
+import tty
 import re
 import time
+
+
+tty.setcbreak(0)
 
 
 def beep(match_obj):
@@ -13,5 +17,6 @@ def beep(match_obj):
 
 
 if __name__ == "__main__":
-    for line in sys.stdin:
-        output_text = beep(re.fullmatch(r'^\d+$', line.rstrip('\n')))
+    while True:
+        ch = sys.stdin.read(1)
+        output_text = beep(re.fullmatch(r'^\d$', ch))
