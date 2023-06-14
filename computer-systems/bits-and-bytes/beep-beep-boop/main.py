@@ -19,4 +19,4 @@ def beep(match_obj):
 if __name__ == "__main__":
     while True:
         ch = sys.stdin.read(1)
-        output_text = beep(re.fullmatch(r'^\d$', ch))
+        output_text = beep(re.fullmatch(r'\d', ch))
