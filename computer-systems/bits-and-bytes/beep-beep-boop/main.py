@@ -6,7 +6,7 @@ import time
 def beep(match_obj):
     if match_obj:
         for _ in range(int(match_obj.group())):
-            sys.stdout.write('\007')
+            sys.stdout.buffer.write(b'\x07')
             sys.stdout.flush()
             time.sleep(0.5)
         return 'beep n times'
