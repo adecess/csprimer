@@ -12,3 +12,6 @@ ENV/
 
 # uint files
 *.uint64
+
+# compiled C files
+*.out
