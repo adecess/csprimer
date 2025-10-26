@@ -15,3 +15,6 @@ ENV/
 
 # compiled C files
 *.out
+
+# compiled Rust files
+*target/
