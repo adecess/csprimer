@@ -18,3 +18,6 @@ ENV/
 
 # compiled Rust files
 *target/
+
+# bmp files
+*.bmp
