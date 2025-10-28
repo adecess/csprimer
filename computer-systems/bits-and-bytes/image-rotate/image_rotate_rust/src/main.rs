@@ -6,8 +6,8 @@ fn main() -> std::io::Result<()> {
     let mut buffer = [0u8; 2];
 
     // read 2 bytes
-    let n = f.read(&mut buffer[..])?;
+    f.read_exact(&mut buffer)?;
 
-    println!("The bytes: {:#02x?}", &buffer[..n]);
+    println!("The bytes: {:#02x?}", &buffer);
     Ok(())
 }
