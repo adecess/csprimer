@@ -9,17 +9,30 @@ fn main() -> std::io::Result<()> {
     // read the whole file
     f.read_to_end(&mut buffer)?;
 
-    // find offset (starting address of pixel array) at the end of the file header
-    // last 4 bytes of the header
+    // find offset as the last 4 bytes of the file header
     let offset_array: [u8; 4] = buffer[10..14]
         .try_into()
         .map_err(|_| Error::other("Could not convert header slice into array"))?;
     let offset = u32::from_le_bytes(offset_array) as usize;
 
-    println!("The offset is {:#x}", offset);
+    println!("The offset is {}", offset);
 
-    // first pixel
-    println!("The first pixel is {:#x?}", &buffer[offset..(offset + 3)]);
+    // bitmap height and width
+    let bitmap_width = i32::from_le_bytes(
+        buffer[18..22]
+            .try_into()
+            .map_err(|_| Error::other("Could not convert bitmap width bytes into array"))?,
+    );
+    let bitmap_height = i32::from_le_bytes(
+        buffer[22..26]
+            .try_into()
+            .map_err(|_| Error::other("Could not convert bitmap height bytes into array"))?,
+    );
+
+    println!(
+        "File width is {} and height is {}",
+        bitmap_width, bitmap_height
+    );
 
     Ok(())
 }
