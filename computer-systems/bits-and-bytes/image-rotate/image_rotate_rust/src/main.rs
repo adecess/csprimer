@@ -38,10 +38,10 @@ fn main() -> std::io::Result<()> {
 
     let mut rotated: Vec<u8> = vec![];
 
-    // iterate over each row
-    for target_row in 0..bitmap_height as usize {
-        // iterate each pixel
-        for target_col in 0..bitmap_width as usize {
+    // iterate over each rotated row
+    for target_row in 0..bitmap_width as usize {
+        // iterate each rotated pixel
+        for target_col in 0..bitmap_height as usize {
             let source_row = target_col;
             let source_col = bitmap_width as usize - 1 - target_row;
 
