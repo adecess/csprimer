@@ -21,3 +21,6 @@ ENV/
 
 # bmp files
 *.bmp
+
+# pcap files
+*.pcap
