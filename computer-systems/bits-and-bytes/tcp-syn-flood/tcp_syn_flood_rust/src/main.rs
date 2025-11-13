@@ -25,6 +25,13 @@ fn main() -> std::io::Result<()> {
         assert_eq!(captured_packet_length, untruncated_packet_length);
 
         let data_start = 16;
+
+        let link_layer_header = get_four_bytes(&slice[data_start..(data_start + 4)])?;
+        assert_eq!(link_layer_header, 2); // payload is an ipv4 packet
+
+        let internet_header_length = get_four_bytes(&slice[(data_start + 4)..(data_start + 8)])?;
+        assert_eq!((internet_header_length & 0x0f) * 4, 20); // we mask the high order bits (big endian)
+
         let data_end = data_start + captured_packet_length;
 
         let packet_data = slice[data_start..data_end].to_vec();
