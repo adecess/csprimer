@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     assert_eq!(link_layer_header_type, 0);
 
     let mut packet_data_list = Vec::new();
-    let mut slice = &buffer[24..];
+    let mut slice: &[u8] = &buffer[24..];
 
     while !slice.is_empty() {
         let captured_packet_length = get_four_bytes(&slice[8..12])?;
@@ -25,12 +25,29 @@ fn main() -> std::io::Result<()> {
         assert_eq!(captured_packet_length, untruncated_packet_length);
 
         let data_start = 16;
-
         let link_layer_header = get_four_bytes(&slice[data_start..(data_start + 4)])?;
         assert_eq!(link_layer_header, 2); // payload is an ipv4 packet
 
-        let internet_header_length = get_four_bytes(&slice[(data_start + 4)..(data_start + 8)])?;
-        assert_eq!((internet_header_length & 0x0f) * 4, 20); // we mask the high order bits (big endian)
+        let ipv4_start = data_start + 4;
+        // the internet header length is in the first byte of the ipv4 header
+        let ihl = (slice[ipv4_start] as usize & 0x0f) * 4; // we mask the high order bits (big endian) + the ipv4 header is made of 4-byte words
+        assert_eq!(ihl, 20);
+
+        let tcp_start = ipv4_start + ihl;
+        // tcp header where ipv4 header ends
+        let source_port = get_two_bytes_be(&slice[tcp_start..(tcp_start + 2)])?;
+        let destination_port = get_two_bytes_be(&slice[(tcp_start + 2)..(tcp_start + 4)])?;
+        let syn_ack_byte = slice[tcp_start + 13];
+        let syn_flag = syn_ack_byte & 0b00000010 > 0;
+        let ack_flag = syn_ack_byte & 0b00010000 > 0;
+
+        println!(
+            "from port {}, to port {}, {} and {}",
+            source_port,
+            destination_port,
+            if syn_flag { "SYN" } else { "" },
+            if ack_flag { "ACK" } else { "" }
+        );
 
         let data_end = data_start + captured_packet_length;
 
@@ -59,4 +76,12 @@ fn get_two_bytes(buffer_slice: &[u8]) -> std::io::Result<usize> {
         .map_err(|_| Error::other("Could not convert header slice into array"))?;
 
     Ok(u16::from_le_bytes(array) as usize)
+}
+
+fn get_two_bytes_be(buffer_slice: &[u8]) -> std::io::Result<usize> {
+    let array: [u8; 2] = buffer_slice
+        .try_into()
+        .map_err(|_| Error::other("Could not convert header slice into array"))?;
+
+    Ok(u16::from_be_bytes(array) as usize)
 }
