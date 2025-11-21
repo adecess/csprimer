@@ -18,6 +18,8 @@ fn main() -> std::io::Result<()> {
 
     let mut packet_data_list = Vec::new();
     let mut slice: &[u8] = &buffer[24..];
+    let mut initiated = 0;
+    let mut acked = 0;
 
     while !slice.is_empty() {
         let captured_packet_length = get_four_bytes(&slice[8..12])?;
@@ -38,8 +40,14 @@ fn main() -> std::io::Result<()> {
         let source_port = get_two_bytes_be(&slice[tcp_start..(tcp_start + 2)])?;
         let destination_port = get_two_bytes_be(&slice[(tcp_start + 2)..(tcp_start + 4)])?;
         let syn_ack_byte = slice[tcp_start + 13];
-        let syn_flag = syn_ack_byte & 0b00000010 > 0;
-        let ack_flag = syn_ack_byte & 0b00010000 > 0;
+        let syn_flag = syn_ack_byte & 0x02 > 0;
+        let ack_flag = syn_ack_byte & 0x10 > 0;
+
+        if destination_port == 80 && syn_flag {
+            initiated += 1;
+        } else if source_port == 80 && ack_flag {
+            acked += 1;
+        }
 
         println!(
             "from port {}, to port {}, {} and {}",
@@ -57,7 +65,13 @@ fn main() -> std::io::Result<()> {
         slice = &slice[data_end..];
     }
 
-    println!("There are {} packets", packet_data_list.len());
+    println!(
+        "There is a total of {} packets. {} are SYN packets, and {} are ACK packets hence a {:.2} ACK percentage",
+        packet_data_list.len(),
+        initiated,
+        acked,
+        acked as f32 / initiated as f32
+    );
 
     Ok(())
 }
