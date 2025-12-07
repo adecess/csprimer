@@ -40,7 +40,7 @@ fn main() -> std::io::Result<()> {
         new_file.write_all(&line)?;
     }
 
-    println!("Created new rotated file");
+    println!("Created new truncated file");
 
     Ok(())
 }
