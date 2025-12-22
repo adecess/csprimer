@@ -8,7 +8,7 @@ bool ispangram(char *s) {
     size_t len = strlen(s);
     char unique_letters[len] = {};
 
-    while (*s != '\n') {
+    while (*s != '\0') {
         char c = tolower(*s);
         if (strchr(unique_letters, c) == NULL) {
             // Safe to append since character is not present in buffer
