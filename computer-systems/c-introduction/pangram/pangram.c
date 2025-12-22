@@ -9,19 +9,16 @@ bool ispangram(char *s) {
     char unique_letters[len] = {};
 
     while (*s != '\n') {
-        if (strchr(unique_letters, tolower(*s)) == NULL) {
+        char c = tolower(*s);
+        if (strchr(unique_letters, c) == NULL) {
             // Safe to append since character is not present in buffer
             size_t pos = strlen(unique_letters);
             if (isalpha(*s)) {
-                unique_letters[pos] = tolower(*s);
+                unique_letters[pos] = c;
                 unique_letters[pos + 1] = '\0';
             }
-
-            s++; // go to next character
-        } else {
-            s++;
-            continue;
         }
+        s++; // go to next character
     }
 
   return strlen(unique_letters) == 26;
