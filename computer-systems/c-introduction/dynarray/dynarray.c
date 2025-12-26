@@ -55,15 +55,12 @@ void DA_push (DA* da, void* x) {
     if (da->length == da->capacity)
             DA_resize(da);
 
-    da->array[da->length] = x;
-    da->length += 1;
+    da->array[da->length++] = x;
 }
 
 void *DA_pop(DA *da) {
     if (da->length > 0) {
-        da->length -= 1;
-
-        return da->array[da->length];
+        return da->array[--da->length];
     }
     return NULL;
 }
