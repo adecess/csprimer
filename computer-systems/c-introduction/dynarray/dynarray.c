@@ -5,7 +5,7 @@
 #define STARTING_CAPACITY 8
 
 typedef struct DA {
-    void **array;
+    void **item;
     int length;
     int capacity;
 } DA;
@@ -20,8 +20,8 @@ DA* DA_new (void) {
 
     dynamic_array_p->capacity = STARTING_CAPACITY;
     dynamic_array_p->length = 0;
-    dynamic_array_p->array = malloc(dynamic_array_p->capacity * sizeof(void *));
-    if(!dynamic_array_p->array) {
+    dynamic_array_p->item = malloc(dynamic_array_p->capacity * sizeof(void *));
+    if(!dynamic_array_p->item) {
         free(dynamic_array_p);
         fprintf(stderr, "Out of memory\n");
         exit(EXIT_FAILURE);
@@ -31,8 +31,8 @@ DA* DA_new (void) {
 }
 
 void DA_free(DA *da) {
-    if (da->array) {
-        free(da->array);
+    if (da->item) {
+        free(da->item);
     }
     free(da);
 }
@@ -43,9 +43,9 @@ int DA_size(DA *da) {
 
 void DA_resize(DA* da) {
     da->capacity *= 2;
-    da->array = realloc(da->array, da->capacity * sizeof(void *));
-    if(!da->array) {
-        free(da->array);
+    da->item = realloc(da->item, da->capacity * sizeof(void *));
+    if(!da->item) {
+        free(da->item);
         fprintf(stderr, "Out of memory\n");
         exit(EXIT_FAILURE);
     }
@@ -53,26 +53,26 @@ void DA_resize(DA* da) {
 
 void DA_push (DA* da, void* x) {
     if (da->length == da->capacity)
-            DA_resize(da);
+        DA_resize(da);
 
-    da->array[da->length++] = x;
+    da->item[da->length++] = x;
 }
 
 void *DA_pop(DA *da) {
     if (da->length > 0) {
-        return da->array[--da->length];
+        return da->item[--da->length];
     }
     return NULL;
 }
 
 void DA_set(DA *da, void *x, int i) {
     if (i < da->length)
-        da->array[i] = x;
+        da->item[i] = x;
 }
 
 void *DA_get(DA *da, int i) {
     if (i < da->length)
-        return da->array[i];
+        return da->item[i];
     return NULL;
 }
 
