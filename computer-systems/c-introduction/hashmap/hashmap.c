@@ -8,15 +8,15 @@
 #define STARTING_BUCKETS 8
 #define MAX_KEY_SIZE 64
 
-typedef struct {
+typedef struct Item {
   char* key;
   void* value;
-  struct Bucket* next;
-} Bucket;
+  struct Item* next;
+} Item;
 
-typedef struct {
-  Bucket** buckets;
-  int entries;
+typedef struct Hashmap {
+  Item** buckets;
+  int total_entries;
   int total_buckets;
 } Hashmap;
 
@@ -37,9 +37,9 @@ Hashmap* Hashmap_new(void) {
   }
 
   hashmap->total_buckets = STARTING_BUCKETS;
-  hashmap->entries = 0;
+  hashmap->total_entries = 0;
   // initialize underlying array with null pointers
-  hashmap->buckets = calloc(hashmap->total_buckets, sizeof(Bucket*));
+  hashmap->buckets = calloc(hashmap->total_buckets, sizeof(Item*));
   if (!hashmap->buckets) {
     fprintf(stderr, "Out of memory\n");
     exit(EXIT_FAILURE);
@@ -48,16 +48,35 @@ Hashmap* Hashmap_new(void) {
   return hashmap;
 }
 
+// TODO
+void Hashmap_resize(Hashmap* h) {}
+
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   uint32_t key_hash = hash(key, h->total_buckets);
+  Item* current_item = h->buckets[key_hash];
 
-  Bucket* bucket = malloc(sizeof(Bucket));
-  bucket->key = key;
-  bucket->value = value;
-  bucket->next = NULL;
-  h->buckets[key_hash] = bucket;
+  for (;;) {
+    if (!current_item) {
+      Item* new_item = malloc(sizeof(Item));
+      new_item->key = key;
+      new_item->value = value;
+      new_item->next = NULL;
+
+      h->buckets[key_hash] = new_item;
+      h->total_entries += 1;
+      if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
+
+      return;
+    } else if (current_item->key == key) {
+      h->buckets[key_hash]->value = value;
+      return;
+    }
+
+    current_item = current_item->next;
+  }
 }
 
+// TOFIX
 void* Hashmap_get(Hashmap* h, char* key) {
   uint32_t key_hash = hash(key, h->total_buckets);
 
@@ -66,12 +85,14 @@ void* Hashmap_get(Hashmap* h, char* key) {
   return NULL;
 }
 
+// TOFIX
 void Hashmap_delete(Hashmap* h, char* key) {
   uint32_t key_hash = hash(key, h->total_buckets);
 
   if (h->buckets[key_hash]) h->buckets[key_hash] = NULL;
 }
 
+// TOFIX
 void Hashmap_free(Hashmap* hashmap) {
   if (hashmap->buckets) {
     free(hashmap->buckets);
@@ -122,8 +143,8 @@ int main() {
      - switch from chaining to open addressing
      - use a sophisticated rehashing scheme to avoid clustered collisions
      - implement some features from Python dicts, such as reducing space use,
-     maintaing key ordering etc. see https://www.youtube.com/watch?v=npw4s1QTmPg
-     for ideas
+     maintaing key ordering etc. see
+     https://www.youtube.com/watch?v=npw4s1QTmPg for ideas
      */
   printf("ok\n");
 }
