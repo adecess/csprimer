@@ -6,6 +6,7 @@
 #include <sys/types.h>
 
 #define STARTING_BUCKETS 8
+#define MAX_KEY_SIZE 64
 
 typedef struct {
   char* key;
@@ -19,6 +20,15 @@ typedef struct {
   int bucket_capacity;
 } Hashmap;
 
+uint32_t hash(char* key) {
+  uint32_t key_hash = 0;
+  for (int i = 0; key[i] != '\0'; i++) {
+    key_hash += (unsigned char)key[i];
+  }
+
+  return key_hash;
+}
+
 Hashmap* Hashmap_new(void) {
   Hashmap* hashmap = malloc(sizeof(Hashmap));
   if (!hashmap) {
@@ -28,9 +38,8 @@ Hashmap* Hashmap_new(void) {
 
   hashmap->bucket_capacity = STARTING_BUCKETS;
   hashmap->size = 0;
-  hashmap->buckets = calloc(
-      hashmap->bucket_capacity,
-      sizeof(Bucket*));  // initialize underlying array with null pointers
+  // initialize underlying array with null pointers
+  hashmap->buckets = calloc(hashmap->bucket_capacity, sizeof(Bucket*));
   if (!hashmap->buckets) {
     fprintf(stderr, "Out of memory\n");
     exit(EXIT_FAILURE);
@@ -40,23 +49,32 @@ Hashmap* Hashmap_new(void) {
 }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
-  uint32_t key_hash = 0;
-  for (int i = 0; key[i] != '\0'; i++) {
-    key_hash += (unsigned char)key[i];
-  }
+  uint32_t key_hash = hash(key);
 
   Bucket* bucket = malloc(sizeof(Bucket));
   bucket->key = key;
   bucket->value = value;
   bucket->next = NULL;
-
   int bucket_index = key_hash % h->bucket_capacity;
+
   h->buckets[bucket_index] = bucket;
 }
 
-void* Hashmap_get(Hashmap* h, char* key) {}
+void* Hashmap_get(Hashmap* h, char* key) {
+  uint32_t key_hash = hash(key);
+  int bucket_index = key_hash % h->bucket_capacity;
 
-void Hashmap_delete(Hashmap* h, char* key) {}
+  if (h->buckets[bucket_index]) return h->buckets[bucket_index]->value;
+
+  return NULL;
+}
+
+void Hashmap_delete(Hashmap* h, char* key) {
+  uint32_t key_hash = hash(key);
+  int bucket_index = key_hash % h->bucket_capacity;
+
+  if (h->buckets[bucket_index]) h->buckets[bucket_index] = NULL;
+}
 
 void Hashmap_free(Hashmap* hashmap) {
   if (hashmap->buckets) {
