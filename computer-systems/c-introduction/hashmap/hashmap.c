@@ -16,17 +16,17 @@ typedef struct {
 
 typedef struct {
   Bucket** buckets;
-  int size;
-  int bucket_capacity;
+  int entries;
+  int total_buckets;
 } Hashmap;
 
-uint32_t hash(char* key) {
+uint32_t hash(char* key, int total_buckets) {
   uint32_t key_hash = 0;
   for (int i = 0; key[i] != '\0'; i++) {
     key_hash += (unsigned char)key[i];
   }
 
-  return key_hash;
+  return key_hash % total_buckets;
 }
 
 Hashmap* Hashmap_new(void) {
@@ -36,10 +36,10 @@ Hashmap* Hashmap_new(void) {
     exit(EXIT_FAILURE);
   }
 
-  hashmap->bucket_capacity = STARTING_BUCKETS;
-  hashmap->size = 0;
+  hashmap->total_buckets = STARTING_BUCKETS;
+  hashmap->entries = 0;
   // initialize underlying array with null pointers
-  hashmap->buckets = calloc(hashmap->bucket_capacity, sizeof(Bucket*));
+  hashmap->buckets = calloc(hashmap->total_buckets, sizeof(Bucket*));
   if (!hashmap->buckets) {
     fprintf(stderr, "Out of memory\n");
     exit(EXIT_FAILURE);
@@ -49,31 +49,27 @@ Hashmap* Hashmap_new(void) {
 }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
-  uint32_t key_hash = hash(key);
+  uint32_t key_hash = hash(key, h->total_buckets);
 
   Bucket* bucket = malloc(sizeof(Bucket));
   bucket->key = key;
   bucket->value = value;
   bucket->next = NULL;
-  int bucket_index = key_hash % h->bucket_capacity;
-
-  h->buckets[bucket_index] = bucket;
+  h->buckets[key_hash] = bucket;
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
-  uint32_t key_hash = hash(key);
-  int bucket_index = key_hash % h->bucket_capacity;
+  uint32_t key_hash = hash(key, h->total_buckets);
 
-  if (h->buckets[bucket_index]) return h->buckets[bucket_index]->value;
+  if (h->buckets[key_hash]) return h->buckets[key_hash]->value;
 
   return NULL;
 }
 
 void Hashmap_delete(Hashmap* h, char* key) {
-  uint32_t key_hash = hash(key);
-  int bucket_index = key_hash % h->bucket_capacity;
+  uint32_t key_hash = hash(key, h->total_buckets);
 
-  if (h->buckets[bucket_index]) h->buckets[bucket_index] = NULL;
+  if (h->buckets[key_hash]) h->buckets[key_hash] = NULL;
 }
 
 void Hashmap_free(Hashmap* hashmap) {
