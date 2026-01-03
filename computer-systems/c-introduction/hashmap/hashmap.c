@@ -53,15 +53,21 @@ void Hashmap_resize(Hashmap* h) {}
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   uint32_t key_hash = hash(key, h->total_buckets);
+  Item* previous_item = NULL;
   Item* current_item = h->buckets[key_hash];
 
   for (;;) {
     if (!current_item) {
       Item* new_item = malloc(sizeof(Item));
-      new_item->key = key;
-      new_item->value = value;
-      new_item->next = NULL;
+      if (!new_item) {
+        fprintf(stderr, "Out of memory\n");
+        exit(EXIT_FAILURE);
+      }
+      *new_item = (Item){.key = key, .value = value, .next = NULL};
 
+      if (previous_item) {
+        previous_item->next = new_item;
+      }
       h->buckets[key_hash] = new_item;
       h->total_entries += 1;
       if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
@@ -72,15 +78,22 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
       return;
     }
 
+    previous_item = current_item;
     current_item = current_item->next;
   }
 }
 
-// TOFIX
 void* Hashmap_get(Hashmap* h, char* key) {
   uint32_t key_hash = hash(key, h->total_buckets);
+  Item* current_item = h->buckets[key_hash];
 
-  if (h->buckets[key_hash]) return h->buckets[key_hash]->value;
+  while (current_item) {
+    if (current_item->key == key) {
+      return current_item->value;
+    }
+
+    current_item = current_item->next;
+  }
 
   return NULL;
 }
