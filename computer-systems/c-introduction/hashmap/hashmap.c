@@ -20,7 +20,7 @@ typedef struct Hashmap {
   int total_buckets;
 } Hashmap;
 
-uint32_t hash(char* key, int total_buckets) {
+uint32_t hash(const char* key, int total_buckets) {
   uint32_t key_hash = 0;
   for (int i = 0; key[i] != '\0'; i++) {
     key_hash += (unsigned char)key[i];
@@ -48,8 +48,14 @@ Hashmap* Hashmap_new(void) {
   return hashmap;
 }
 
-// TODO
-void Hashmap_resize(Hashmap* h) {}
+void Hashmap_resize(Hashmap* h) {
+  h->total_buckets *= 2;
+  h = realloc(h, h->total_buckets);
+  if (!h) {
+    fprintf(stderr, "Out of memory\n");
+    exit(EXIT_FAILURE);
+  }
+}
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   uint32_t key_hash = hash(key, h->total_buckets);
@@ -57,7 +63,7 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
   Item* current_item = h->buckets[key_hash];
 
   for (;;) {
-    if (!current_item) {
+    if (current_item == NULL) {
       Item* new_item = malloc(sizeof(Item));
       if (!new_item) {
         fprintf(stderr, "Out of memory\n");
@@ -87,7 +93,7 @@ void* Hashmap_get(Hashmap* h, char* key) {
   uint32_t key_hash = hash(key, h->total_buckets);
   Item* current_item = h->buckets[key_hash];
 
-  while (current_item) {
+  while (current_item != NULL) {
     if (current_item->key == key) {
       return current_item->value;
     }
@@ -98,15 +104,43 @@ void* Hashmap_get(Hashmap* h, char* key) {
   return NULL;
 }
 
-// TOFIX
 void Hashmap_delete(Hashmap* h, char* key) {
   uint32_t key_hash = hash(key, h->total_buckets);
 
-  if (h->buckets[key_hash]) h->buckets[key_hash] = NULL;
+  Item* previous_item = NULL;
+  Item* current_item = h->buckets[key_hash];
+
+  for (;;) {
+    if (current_item->key == key) {
+      if (previous_item) {
+        previous_item->next = current_item->next;
+      } else {
+        // next item becomes head
+        h->buckets[key_hash] = current_item->next;
+      }
+
+      free(current_item);
+      return;
+    }
+
+    previous_item = current_item;
+    current_item = current_item->next;
+  }
 }
 
-// TOFIX
 void Hashmap_free(Hashmap* hashmap) {
+  for (int i = 0; i < hashmap->total_buckets; i++) {
+    if (hashmap->buckets[i]) {
+      Item* current_item = hashmap->buckets[i];
+      while (current_item != NULL) {
+        Item* item = current_item;
+        current_item = current_item->next;
+
+        free(item);
+      }
+    }
+  }
+
   if (hashmap->buckets) {
     free(hashmap->buckets);
   }
