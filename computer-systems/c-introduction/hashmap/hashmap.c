@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <sys/types.h>
 
@@ -12,7 +13,7 @@ typedef uint32_t Hash;
 typedef struct ListItem {
   char* key;
   void* value;
-  Hash hash;
+  Hash hash;  // use hash instead of key pointer for comparisons
   struct ListItem* next;
 } ListItem;
 
@@ -22,14 +23,14 @@ typedef struct Hashmap {
   int total_buckets;
 } Hashmap;
 
-uint32_t djb2(const char* key, int total_buckets) {
+Hash djb2(const char* key) {
   Hash key_hash = 5381;
   char c;
   while ((c = *key++)) {
     key_hash = ((key_hash << 5) + key_hash) + c;
   }
 
-  return key_hash % total_buckets;
+  return key_hash;
 }
 
 Hashmap* Hashmap_new(void) {
@@ -61,9 +62,9 @@ void Hashmap_resize(Hashmap* h) {
 }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
-  uint32_t key_hash = djb2(key, h->total_buckets);
+  Hash key_hash = djb2(key);
   ListItem* previous_item = NULL;
-  ListItem* current_item = h->buckets[key_hash];
+  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
 
   for (;;) {
     if (current_item == NULL) {
@@ -72,18 +73,23 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
         fprintf(stderr, "Out of memory\n");
         exit(EXIT_FAILURE);
       }
-      *new_item = (ListItem){.key = key, .value = value, .next = NULL};
+
+      new_item->key =
+          strdup(key);  // avoid assigning the same character pointer
+      new_item->value = value;
+      new_item->hash = key_hash;
+      new_item->next = NULL;
 
       if (previous_item) {
         previous_item->next = new_item;
       }
-      h->buckets[key_hash] = new_item;
+      h->buckets[key_hash % h->total_buckets] = new_item;
       h->total_entries += 1;
       if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
 
       return;
     } else if (current_item->key == key) {
-      h->buckets[key_hash]->value = value;
+      h->buckets[key_hash % h->total_buckets]->value = value;
       return;
     }
 
@@ -93,11 +99,11 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
-  uint32_t key_hash = djb2(key, h->total_buckets);
-  ListItem* current_item = h->buckets[key_hash];
+  Hash key_hash = djb2(key);
+  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
 
   while (current_item != NULL) {
-    if (current_item->key == key) {
+    if (current_item->hash == key_hash) {
       return current_item->value;
     }
 
@@ -108,18 +114,18 @@ void* Hashmap_get(Hashmap* h, char* key) {
 }
 
 void Hashmap_delete(Hashmap* h, char* key) {
-  uint32_t key_hash = djb2(key, h->total_buckets);
+  Hash key_hash = djb2(key);
 
   ListItem* previous_item = NULL;
-  ListItem* current_item = h->buckets[key_hash];
+  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
 
   for (;;) {
-    if (current_item->key == key) {
+    if (current_item->hash == key_hash) {
       if (previous_item) {
         previous_item->next = current_item->next;
       } else {
         // next item becomes head
-        h->buckets[key_hash] = current_item->next;
+        h->buckets[key_hash % h->total_buckets] = current_item->next;
       }
 
       free(current_item);
