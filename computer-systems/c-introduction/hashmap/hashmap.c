@@ -7,23 +7,26 @@
 
 #define STARTING_BUCKETS 8
 #define MAX_KEY_SIZE 64
+typedef uint32_t Hash;
 
-typedef struct Item {
+typedef struct ListItem {
   char* key;
   void* value;
-  struct Item* next;
-} Item;
+  Hash hash;
+  struct ListItem* next;
+} ListItem;
 
 typedef struct Hashmap {
-  Item** buckets;
+  ListItem** buckets;
   int total_entries;
   int total_buckets;
 } Hashmap;
 
-uint32_t hash(const char* key, int total_buckets) {
-  uint32_t key_hash = 0;
-  for (int i = 0; key[i] != '\0'; i++) {
-    key_hash += (unsigned char)key[i];
+uint32_t djb2(const char* key, int total_buckets) {
+  Hash key_hash = 5381;
+  char c;
+  while ((c = *key++)) {
+    key_hash = ((key_hash << 5) + key_hash) + c;
   }
 
   return key_hash % total_buckets;
@@ -39,7 +42,7 @@ Hashmap* Hashmap_new(void) {
   hashmap->total_buckets = STARTING_BUCKETS;
   hashmap->total_entries = 0;
   // initialize underlying array with null pointers
-  hashmap->buckets = calloc(hashmap->total_buckets, sizeof(Item*));
+  hashmap->buckets = calloc(hashmap->total_buckets, sizeof(ListItem*));
   if (!hashmap->buckets) {
     fprintf(stderr, "Out of memory\n");
     exit(EXIT_FAILURE);
@@ -58,18 +61,18 @@ void Hashmap_resize(Hashmap* h) {
 }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
-  uint32_t key_hash = hash(key, h->total_buckets);
-  Item* previous_item = NULL;
-  Item* current_item = h->buckets[key_hash];
+  uint32_t key_hash = djb2(key, h->total_buckets);
+  ListItem* previous_item = NULL;
+  ListItem* current_item = h->buckets[key_hash];
 
   for (;;) {
     if (current_item == NULL) {
-      Item* new_item = malloc(sizeof(Item));
+      ListItem* new_item = malloc(sizeof(ListItem));
       if (!new_item) {
         fprintf(stderr, "Out of memory\n");
         exit(EXIT_FAILURE);
       }
-      *new_item = (Item){.key = key, .value = value, .next = NULL};
+      *new_item = (ListItem){.key = key, .value = value, .next = NULL};
 
       if (previous_item) {
         previous_item->next = new_item;
@@ -90,8 +93,8 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
-  uint32_t key_hash = hash(key, h->total_buckets);
-  Item* current_item = h->buckets[key_hash];
+  uint32_t key_hash = djb2(key, h->total_buckets);
+  ListItem* current_item = h->buckets[key_hash];
 
   while (current_item != NULL) {
     if (current_item->key == key) {
@@ -105,10 +108,10 @@ void* Hashmap_get(Hashmap* h, char* key) {
 }
 
 void Hashmap_delete(Hashmap* h, char* key) {
-  uint32_t key_hash = hash(key, h->total_buckets);
+  uint32_t key_hash = djb2(key, h->total_buckets);
 
-  Item* previous_item = NULL;
-  Item* current_item = h->buckets[key_hash];
+  ListItem* previous_item = NULL;
+  ListItem* current_item = h->buckets[key_hash];
 
   for (;;) {
     if (current_item->key == key) {
@@ -131,9 +134,9 @@ void Hashmap_delete(Hashmap* h, char* key) {
 void Hashmap_free(Hashmap* hashmap) {
   for (int i = 0; i < hashmap->total_buckets; i++) {
     if (hashmap->buckets[i]) {
-      Item* current_item = hashmap->buckets[i];
+      ListItem* current_item = hashmap->buckets[i];
       while (current_item != NULL) {
-        Item* item = current_item;
+        ListItem* item = current_item;
         current_item = current_item->next;
 
         free(item);
