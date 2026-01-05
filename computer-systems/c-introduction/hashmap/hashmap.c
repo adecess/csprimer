@@ -52,14 +52,14 @@ Hashmap* Hashmap_new(void) {
   return hashmap;
 }
 
-void Hashmap_resize(Hashmap* h) {
-  h->total_buckets *= 2;
-  h = realloc(h, h->total_buckets);
-  if (!h) {
-    fprintf(stderr, "Out of memory\n");
-    exit(EXIT_FAILURE);
-  }
-}
+// void Hashmap_resize(Hashmap* h) {
+//   h->total_buckets *= 2;
+//   h = realloc(h->buckets, h->total_buckets * sizeof(ListItem*));
+//   if (!h) {
+//     fprintf(stderr, "Out of memory\n");
+//     exit(EXIT_FAILURE);
+//   }
+// }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   Hash key_hash = djb2(key);
@@ -102,7 +102,7 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
   }
 
   h->total_entries += 1;
-  if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
+  // if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
@@ -137,6 +137,7 @@ void Hashmap_delete(Hashmap* h, char* key) {
         h->buckets[bucket_index] = current_item->next;
       }
 
+      free(current_item->key);
       free(current_item);
       return;
     }
@@ -148,20 +149,16 @@ void Hashmap_delete(Hashmap* h, char* key) {
 
 void Hashmap_free(Hashmap* hashmap) {
   for (int i = 0; i < hashmap->total_buckets; i++) {
-    if (hashmap->buckets[i]) {
-      ListItem* current_item = hashmap->buckets[i];
-      while (current_item != NULL) {
-        ListItem* item = current_item;
-        current_item = current_item->next;
+    ListItem* current_item = hashmap->buckets[i];
+    while (current_item != NULL) {
+      ListItem* item = current_item;
+      current_item = current_item->next;
 
-        free(item);
-      }
+      free(item->key);
+      free(item);
     }
   }
-
-  if (hashmap->buckets) {
-    free(hashmap->buckets);
-  }
+  free(hashmap->buckets);
   free(hashmap);
 }
 
