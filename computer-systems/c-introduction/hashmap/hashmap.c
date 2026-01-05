@@ -52,14 +52,16 @@ Hashmap* Hashmap_new(void) {
   return hashmap;
 }
 
-// void Hashmap_resize(Hashmap* h) {
-//   h->total_buckets *= 2;
-//   h = realloc(h->buckets, h->total_buckets * sizeof(ListItem*));
-//   if (!h) {
-//     fprintf(stderr, "Out of memory\n");
-//     exit(EXIT_FAILURE);
-//   }
-// }
+// TO FIX rehash existing entries + set new buckets to null with calloc instead
+// of garbage values with realloc + free old buckets array
+void Hashmap_resize(Hashmap* h) {
+  h->total_buckets *= 2;
+  h = realloc(h->buckets, h->total_buckets * sizeof(ListItem*));
+  if (!h) {
+    fprintf(stderr, "Out of memory\n");
+    exit(EXIT_FAILURE);
+  }
+}
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   Hash key_hash = djb2(key);
@@ -102,7 +104,7 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
   }
 
   h->total_entries += 1;
-  // if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
+  if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
