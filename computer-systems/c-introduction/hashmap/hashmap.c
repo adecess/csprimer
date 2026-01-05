@@ -107,10 +107,11 @@ void Hashmap_set(Hashmap* h, char* key, void* value) {
 
 void* Hashmap_get(Hashmap* h, char* key) {
   Hash key_hash = djb2(key);
-  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
+  int bucket_index = key_hash % h->total_buckets;
+  ListItem* current_item = h->buckets[bucket_index];
 
   while (current_item != NULL) {
-    if (current_item->hash == key_hash) {
+    if (current_item->hash == key_hash && strcmp(current_item->key, key) == 0) {
       return current_item->value;
     }
 
@@ -122,17 +123,18 @@ void* Hashmap_get(Hashmap* h, char* key) {
 
 void Hashmap_delete(Hashmap* h, char* key) {
   Hash key_hash = djb2(key);
+  int bucket_index = key_hash % h->total_buckets;
 
   ListItem* previous_item = NULL;
-  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
+  ListItem* current_item = h->buckets[bucket_index];
 
-  for (;;) {
-    if (current_item->hash == key_hash) {
+  while (current_item != NULL) {
+    if (current_item->hash == key_hash && strcmp(current_item->key, key) == 0) {
       if (previous_item) {
         previous_item->next = current_item->next;
       } else {
         // next item becomes head
-        h->buckets[key_hash % h->total_buckets] = current_item->next;
+        h->buckets[bucket_index] = current_item->next;
       }
 
       free(current_item);
