@@ -63,39 +63,46 @@ void Hashmap_resize(Hashmap* h) {
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
   Hash key_hash = djb2(key);
+  int bucket_index = key_hash % h->total_buckets;
   ListItem* previous_item = NULL;
-  ListItem* current_item = h->buckets[key_hash % h->total_buckets];
+  ListItem* current_item = h->buckets[bucket_index];
 
-  for (;;) {
-    if (current_item == NULL) {
-      ListItem* new_item = malloc(sizeof(ListItem));
-      if (!new_item) {
-        fprintf(stderr, "Out of memory\n");
-        exit(EXIT_FAILURE);
-      }
-
-      new_item->key =
-          strdup(key);  // avoid assigning the same character pointer
-      new_item->value = value;
-      new_item->hash = key_hash;
-      new_item->next = NULL;
-
-      if (previous_item) {
-        previous_item->next = new_item;
-      }
-      h->buckets[key_hash % h->total_buckets] = new_item;
-      h->total_entries += 1;
-      if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
-
-      return;
-    } else if (current_item->key == key) {
-      h->buckets[key_hash % h->total_buckets]->value = value;
+  // Search for existing key
+  while (current_item != NULL) {
+    if (current_item->hash == key_hash && strcmp(current_item->key, key) == 0) {
+      current_item->value = value;  // Update existing
       return;
     }
-
     previous_item = current_item;
     current_item = current_item->next;
   }
+
+  // Key not found, insert new item
+  ListItem* new_item = malloc(sizeof(ListItem));
+  if (!new_item) {
+    fprintf(stderr, "Out of memory\n");
+    exit(EXIT_FAILURE);
+  }
+
+  new_item->key = strdup(key);  // avoid assigning the same character pointer
+  if (!new_item->key) {
+    free(new_item);
+    fprintf(stderr, "Out of memory\n");
+    exit(EXIT_FAILURE);
+  }
+
+  new_item->value = value;
+  new_item->hash = key_hash;
+  new_item->next = NULL;
+
+  if (previous_item) {
+    previous_item->next = new_item;  // Append to chain
+  } else {
+    h->buckets[bucket_index] = new_item;  // First in bucket
+  }
+
+  h->total_entries += 1;
+  if (h->total_entries >= h->total_buckets / 2) Hashmap_resize(h);
 }
 
 void* Hashmap_get(Hashmap* h, char* key) {
