@@ -52,15 +52,34 @@ Hashmap* Hashmap_new(void) {
   return hashmap;
 }
 
-// TO FIX rehash existing entries + set new buckets to null with calloc instead
-// of garbage values with realloc + free old buckets array
 void Hashmap_resize(Hashmap* h) {
-  h->total_buckets *= 2;
-  h = realloc(h->buckets, h->total_buckets * sizeof(ListItem*));
-  if (!h) {
+  int old_bucket_count = h->total_buckets;
+  int new_total_buckets = h->total_buckets * 2;
+  ListItem** new_buckets = calloc(new_total_buckets, sizeof(ListItem*));
+  if (!new_buckets) {
     fprintf(stderr, "Out of memory\n");
     exit(EXIT_FAILURE);
   }
+
+  for (int i = 0; i < old_bucket_count; i++) {
+    ListItem* current_item = h->buckets[i];
+
+    while (current_item != NULL) {
+      ListItem* next = current_item->next;  // Save next before it is modfied
+
+      int new_index = current_item->hash % new_total_buckets;
+
+      // Insert at head
+      current_item->next = new_buckets[new_index];  // is NULL the first time
+      new_buckets[new_index] = current_item;
+
+      current_item = next;
+    }
+  }
+
+  free(h->buckets);
+  h->total_buckets = new_total_buckets;
+  h->buckets = new_buckets;
 }
 
 void Hashmap_set(Hashmap* h, char* key, void* value) {
