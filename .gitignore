@@ -13,6 +13,9 @@ ENV/
 # uint files
 *.uint64
 
+# object files
+*.o
+
 # compiled C files
 *.out
 
