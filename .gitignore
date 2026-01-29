@@ -16,8 +16,11 @@ ENV/
 # object files
 *.o
 
-# compiled C files
+# compiled C and asm files
 *.out
+
+# Compiled test files
+*tests
 
 # compiled Rust files
 *target/
