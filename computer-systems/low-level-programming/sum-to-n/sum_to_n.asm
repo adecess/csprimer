@@ -6,6 +6,6 @@ sum_to_n:
 
 add_and_decrement:
     add eax, edi
-    sub edi, 1
+    dec edi ; equivalent to sub edi, 1
     jg add_and_decrement
     ret
