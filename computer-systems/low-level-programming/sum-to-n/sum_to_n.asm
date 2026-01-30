@@ -3,14 +3,11 @@ global sum_to_n
 
 sum_to_n:
     mov eax, 0
-    mov ebx, 0
+    jmp add_and_decrement
 
-compare_increment:
-    cmp ebx, edi
-    jl add_one_and_increment
+add_and_decrement:
+    add eax, edi
+    sub edi, 1
+    cmp edi, 0
+    jg add_and_decrement
     ret
-
-add_one_and_increment:
-    add ebx, 1
-    add eax, ebx
-    jmp compare_increment
