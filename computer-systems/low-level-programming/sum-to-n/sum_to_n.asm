@@ -7,5 +7,5 @@ sum_to_n:
 add_and_decrement:
     add eax, edi
     sub edi, 1
-    jge add_and_decrement
+    jg add_and_decrement
     ret
