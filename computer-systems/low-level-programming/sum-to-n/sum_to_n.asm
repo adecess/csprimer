@@ -2,10 +2,7 @@ section .text
 global sum_to_n
 
 sum_to_n:
-    mov eax, 0
-
-add_and_decrement:
-    add eax, edi
-    dec edi ; equivalent to sub edi, 1
-    jg add_and_decrement
+    lea eax, [edi + 1] ; copy edi + 1 to eax
+    imul eax, edi ; multiply eax by edi
+    shr eax, 1 ; shift eax right once
     ret
