@@ -22,22 +22,13 @@ int sum(int* nums, int n) {
 
   // vertical sum
   for (int i = 0; i < n; i += 16)
-    /*
-    Load 16 consecutive int32 values starting at nums[i]
-    Example (first iteration, i = 0):
-      nums = [1, 2, 3, 4, ..., 16, ...]
-      loaded vector = [1, 2, 3, 4, ..., 16]
-
-    Then perform lane-wise addition with the accumulator `s`:
-      if s was initially [0, 0, 0, 0, ..., 0]
-      result becomes        [1, 2, 3, 4, ..., 16]
-
-    On the next iteration (i = 16), suppose:
-      nums[16..31] = [17, 18, 19, 20, ..., 32]
-      s becomes:
-      [1+17, 2+18, 3+19, 4+20, ..., 16+32]
-      = [18, 20, 22, 24, ..., 48]
-    */
+    // Load 16 ints: nums[i..i+15] into a 512-bit vector
+    // Example: nums = [1,2,3,...,16,17,18,...]
+    //   1st iter: s = [0,...,0] + [1,2,3,...,16]
+    //            = [1,2,3,...,16]
+    //   2nd iter: s + [17,18,...,32]
+    //            = [1+17, 2+18, ..., 16+32]
+    // (lane-wise / vertical accumulation, not a horizontal sum)
     s = _mm512_add_epi32(s, _mm512_load_si512((reg*)&nums[i]));
 
   return horizontal_sum(s);
