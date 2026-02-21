@@ -1,4 +1,3 @@
-#include <immintrin.h>
 #include <x86intrin.h>
 
 typedef __m512i reg;
