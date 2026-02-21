@@ -28,7 +28,7 @@ int sum(int* nums, int n) {
     //   2nd iter: s + [17,18,...,32]
     //            = [1+17, 2+18, ..., 16+32]
     // (lane-wise / vertical accumulation, not a horizontal sum)
-    s = _mm512_add_epi32(s, _mm512_load_si512((reg*)&nums[i]));
+    s = _mm512_add_epi32(s, _mm512_loadu_si512((reg*)&nums[i]));
 
   return horizontal_sum(s);
 }
