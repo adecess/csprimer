@@ -18,6 +18,7 @@ ENV/
 
 # compiled C and asm files
 *.out
+*bench
 
 # Compiled test files
 *tests
