@@ -4,7 +4,6 @@
 
 #define int32le(b) (b)[0] | ((b)[1] << 8) | ((b)[2] << 16) | ((b)[3] << 24)
 
-// TODO: make a small change to this function to make it much faster
 void grayscale(unsigned char* pixels, int32_t width, int32_t height) {
   int x, y, offset;
   unsigned char lum;
