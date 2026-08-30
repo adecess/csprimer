@@ -1,6 +1,7 @@
 use std::alloc::{Layout, alloc};
 use std::hint::black_box;
-use std::{thread, time};
+use std::{process, thread, time};
+use rustix::thread::{sched_getcpu}; // rustix provides safe bindings to POSIX APIs
 
 const SLEEP_SEC: time::Duration = time::Duration::from_millis(3000);
 const NUM_MULS: u32 = 100000000;
@@ -16,7 +17,9 @@ struct ProfileTimes {}
 fn profile_start(profile_times: &mut ProfileTimes) {}
 
 // TODO given starting information, compute and log differences to now
-fn profile_log(profile_times: &mut ProfileTimes) {}
+fn profile_log(profile_times: &mut ProfileTimes) {
+    println!("[pid {}, cpu {}] hey", process::id(), sched_getcpu())
+}
 
 fn main() {
     let mut profile_times = ProfileTimes::default();
@@ -34,10 +37,9 @@ fn main() {
     profile_start(&mut profile_times);
     let layout = Layout::from_size_align(ALLOC_SIZE, ALIGN_SIZE).expect("alignemnt error");
     for _ in 0..NUM_ALLOCS {
-        let ptr = unsafe { alloc(layout) };
+        let ptr = unsafe { alloc(layout) };     // intentional leaking like in the exercise template
         black_box(ptr);
     }
-    // intentional leaking like in the C exercise template
     profile_log(&mut profile_times);
 
     // TODO profile sleeping
