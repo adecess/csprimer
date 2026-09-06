@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rustix = { version = "1.1.4", features = ["thread"] }
+libc = "0.2"
+nix = { version = "0.31.3", features = ["resource", "sched"] }
