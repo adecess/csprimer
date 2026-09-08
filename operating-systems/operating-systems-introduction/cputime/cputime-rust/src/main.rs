@@ -1,6 +1,7 @@
 use nix::sched::sched_getcpu; // nix provides safe bindings to libc
 use nix::sys::resource::{Usage, UsageWho, getrusage};
 use nix::sys::time::TimeVal;
+use std::alloc::{Layout, alloc};
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 use std::{process, thread};
@@ -9,6 +10,7 @@ const SLEEP_SEC: Duration = Duration::from_millis(3000);
 const NUM_MULS: u32 = 100000000;
 const NUM_ALLOCS: u32 = 100000;
 const ALLOC_SIZE: usize = 1000;
+const ALIGN_SIZE: usize = 16; // 64-bit Linux minimum alignment
 
 #[derive(Default)]
 struct ProfileTimes {
@@ -76,8 +78,11 @@ fn main() {
         &format!("{} allocs of size {}", NUM_ALLOCS, ALLOC_SIZE),
     );
     for _ in 0..NUM_ALLOCS {
-        let ptr = vec![0; ALLOC_SIZE]; // simple and safe way to heap allocate a specific size
-        black_box(ptr);
+        let layout = Layout::from_size_align(ALLOC_SIZE, ALIGN_SIZE).unwrap();
+        unsafe {
+            let ptr = alloc(layout); // intentional leaking like in the C template
+            black_box(ptr);
+        }
     }
     profile_log(&mut profile_times);
 
