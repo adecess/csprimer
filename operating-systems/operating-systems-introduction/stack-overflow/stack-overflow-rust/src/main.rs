@@ -1,22 +1,24 @@
-use std::env;
-
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let n = args[1]
-        .parse::<u32>()
-        .expect("Failed to parse the argument into a u32");
-
-    let mut frames = 0u32;
-    println!("fib({:?}) is {}", n, boom(n, &mut frames));
+    start();
+    println!("OK");
 }
 
-fn boom(n: u32, frames: &mut u32) -> u32 {
-    println!("stack frame #{}", frames);
-    *frames += 1;
-    println!("current stack address of n {:p}", &n);
+fn start() {
+    let depth = 0i32;
+    f(depth, &depth);
+}
 
-    let boom_number = boom(n + 1, frames);
+#[inline(never)]
+fn f(depth: i32, bottom: &i32) {
+    let bottom_addr = bottom as *const i32 as isize;
+    let current_addr = &depth as *const i32 as isize;
 
-    *frames -= 1;
-    boom_number
+    println!(
+        "frame #{} {} ({:p})",
+        depth,
+        bottom_addr - current_addr,
+        &depth
+    );
+
+    f(depth + 1, bottom);
 }
